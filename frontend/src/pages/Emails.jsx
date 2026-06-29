@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "../App.css";
 import filterIcon from '../components/filter.png';
 
@@ -44,12 +44,11 @@ const Emails = () => {
     return searchMatch && dateMatch && labelMatch;
   });
 
-  const fetchEmails = () => {
+  const fetchEmails = useCallback(() => {
     setLoading(true);
     fetch(`http://localhost:5000/emails?detail=${selectedDetail}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
-        console.log("API response:", typeof data, data);
         setEmails(data);
         setLoading(false);
       })
@@ -57,11 +56,11 @@ const Emails = () => {
         console.error("Error fetching emails:", err);
         setLoading(false);
       });
-  };
+  }, [selectedDetail]);
 
   useEffect(() => {
     fetchEmails();
-  }, []);
+  }, [fetchEmails]);
 
   return (
     <div className="App">
@@ -76,7 +75,6 @@ const Emails = () => {
           />
 
           <div className="dropdown-group">
-            {/* Filter Button */}
             <button className="dropdown-btn" onClick={() => setFilterOpen(!filterOpen)}>
               Filter <img src={filterIcon} alt="Filter" className="filter-icon" />
             </button>
@@ -90,7 +88,7 @@ const Emails = () => {
                       name="dateFilter"
                       value={option}
                       checked={selectedDateFilter === option}
-                      // onChange={(e) => setSelectedDateFilter(e.target.value)}
+                      onChange={(e) => setSelectedDateFilter(e.target.value)}
                     />
                     {option}
                   </label>
@@ -105,9 +103,9 @@ const Emails = () => {
                       checked={selectedLabels.includes(label)}
                       onChange={(e) => {
                         const { value, checked } = e.target;
-                        // setSelectedLabels((prev) =>
-                        //   checked ? [...prev, value] : prev.filter((v) => v !== value)
-                        // );
+                        setSelectedLabels((prev) =>
+                          checked ? [...prev, value] : prev.filter((v) => v !== value)
+                        );
                       }}
                     />
                     {label}
@@ -120,7 +118,6 @@ const Emails = () => {
               </div>
             )}
 
-            {/* Detail Button */}
             <button className="dropdown-btn" onClick={() => setDetailOpen(!detailOpen)}>
               Detail
             </button>
@@ -131,10 +128,10 @@ const Emails = () => {
                   <label key={option}>
                     <input
                       type="radio"
-                        name="summaryLength"
-                        value={option.toLowerCase()}
-                        checked={selectedDetail === option.toLowerCase()}
-                        onChange={(e) => setSelectedDetail(e.target.value)}
+                      name="summaryLength"
+                      value={option.toLowerCase()}
+                      checked={selectedDetail === option.toLowerCase()}
+                      onChange={(e) => setSelectedDetail(e.target.value)}
                     />
                     {option}
                   </label>
@@ -143,7 +140,7 @@ const Emails = () => {
                   <button
                     onClick={() => {
                       setDetailOpen(false);
-                      fetchEmails(); 
+                      fetchEmails();
                     }}
                   >
                     Apply
@@ -158,7 +155,6 @@ const Emails = () => {
           </button>
         </div>
       </div>
-      
 
       <h2 className="email-heading">Your Summarized Emails</h2>
       {loading ? (
@@ -176,23 +172,15 @@ const Emails = () => {
                 <h3>{email.subject || "No Subject"}</h3>
                 <p>
                   <strong>From:</strong>{' '}
-                  {email.from.replace(/<.*>/, '')} {/* Name part only */}
-                  <span className="blurred-email">{
-                    email.from.match(/<.*>/)?.[0] || ''
-                  }</span>
+                  {email.from.replace(/<.*>/, '')}
+                  <span className="blurred-email">{email.from.match(/<.*>/)?.[0] || ''}</span>
                 </p>
                 <p>{email.summary}</p>
                 <a
                   href={`https://mail.google.com/mail/u/0/#inbox/${email.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: "inline-block",
-                    marginTop: "1rem",
-                    color: "#007bff",
-                    textDecoration: "none",
-                    fontWeight: "bold",
-                  }}
+                  style={{ display: "inline-block", marginTop: "1rem", color: "#007bff", textDecoration: "none", fontWeight: "bold" }}
                 >
                   Open in Gmail →
                 </a>
